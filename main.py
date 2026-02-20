@@ -1,6 +1,12 @@
-def main():
-    print("Hello from agentic-rag!")
+from fastapi import FastAPI
+
+app = FastAPI(
+    title="Agentic RAG",
+    description="Agentic RAG",
+    version="0.1.0",
+)
 
 
-if __name__ == "__main__":
-    main()
+@app.get("/")
+async def healthz() -> dict:
+    return {"status": "ok!"}
