@@ -1,0 +1,39 @@
+name: Agentic-RAG CI
+
+on:
+    push:
+        branches: [main, dev]
+    pull_request:
+        branches: [main, dev]
+
+jobs:
+    backend:
+        runs-on: ubuntu-latest
+        
+        steps:
+            - name: Update apt and install dependencies
+              run: |
+                sudo apt-get update
+                sudo apt-get install -y build-essential python3-dev graphviz libgraphviz-dev pkg-config
+            
+            - uses: actions/checkout@v4
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@v6
+              with:
+                version: "0.9.28"
+            
+            - name: Lock file check
+              run: uv lock --check
+
+            - name: Install backend dependencies
+              run: uv sync --frozen
+
+            - name: Lint check
+              run: uv run ruff check --output-format=github ./
+
+            - name: Format check
+              run: uv run ruff format --diff ./
+
+            - name: Type check
+              run: uv run mypy ./
