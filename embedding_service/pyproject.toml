@@ -1,0 +1,40 @@
+[project]
+name = "embedding-service"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.129.1",
+    "pydantic-settings>=2.13.1",
+    "python-json-logger>=4.0.0",
+    "torch>=2.10.0",
+    "sentence-transformers>=5.2.3",
+    "uvicorn>=0.41.0",
+]
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.1",
+    "ruff>=0.15.2",
+]
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+explicit_package_bases = true
+namespace_packages = true
+
+[tool.ruff.lint]
+ignore = ["E501"]
+extend-select = ["E", "I", "F", "G", "N", "T201", "T203"]
