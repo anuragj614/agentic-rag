@@ -5,6 +5,7 @@ help:
 	@echo "format 						-- format backend"
 	@echo "mypy 						-- type check backend"
 	@echo "dev 							-- start development server"
+	@echo "clean 						-- remove docker containers and volumes"
 
 
 .PHONY: install
@@ -26,4 +27,11 @@ mypy:
 
 .PHONY: dev
 dev:
-	uv run uvicorn main:app --reload --host localhost --port 8080 --log-level info
+	docker compose up -d
+	@echo "⌛ Waiting 5 seconds for docker services to be healthy..."
+	@sleep 5
+	uv run uvicorn main:app --reload --host localhost --port 8080 --workers 1 --log-level info
+
+.PHONY: clean
+clean:
+	docker compose down -v

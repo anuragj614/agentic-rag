@@ -15,6 +15,14 @@ class Settings(BaseSettings):
     DEBUG: int = 1
     APP_NAME: str = "Agentic RAG"
 
+    # Database settings
+    DB_URL: str = "postgresql+asyncpg://postgres:password@localhost:5432/agentic-rag"
+    DB_POOL_SIZE: int = 5
+    DB_MAX_OVERFLOW: int = 10
+
+    # Redis settings
+    REDIS_URL: str = "redis://localhost:6379"
+
     @field_validator("DEBUG", mode="before")
     @classmethod
     def validate_debug(cls, v: str) -> int:
