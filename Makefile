@@ -5,6 +5,7 @@ help:
 	@echo "format 						-- format backend"
 	@echo "mypy 						-- type check backend"
 	@echo "dev 							-- start development server"
+	@echo "embeddings		 			-- start embedding server"
 	@echo "clean 						-- remove docker containers and volumes"
 
 
@@ -23,13 +24,17 @@ format:
 
 .PHONY: mypy
 mypy:
-	uv run mypy .
+	MYPY_PATH=./,embedding_service uv run mypy .
+
+.PHONY: embeddings
+embeddings:
+	cd embedding_service && uv run uvicorn main:app --reload --host localhost --port 8081 --workers 1 --log-level info
 
 .PHONY: dev
 dev:
 	docker compose up -d
-	@echo "⌛ Waiting 5 seconds for docker services to be healthy..."
-	@sleep 5
+	@echo "⌛ Waiting 3 seconds for docker services to be healthy..."
+	@sleep 3
 	uv run uvicorn main:app --reload --host localhost --port 8080 --workers 1 --log-level info
 
 .PHONY: clean

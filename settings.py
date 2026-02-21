@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     # Redis settings
     REDIS_URL: str = "redis://localhost:6379"
 
+    # Embedding service settings
+    EMBEDDING_SERVICE_URL: str = "http://localhost:8001/embeddings"
+    REQUEST_TIMEOUT: float = 10.0
+
     @field_validator("DEBUG", mode="before")
     @classmethod
     def validate_debug(cls, v: str) -> int:
