@@ -1,0 +1,27 @@
+name: agentic-rag
+services:
+
+  db:
+    image: pgvector/pgvector:pg17
+    restart: always
+    ports:
+      - 5432:5432
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=agentic-rag
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+
+  redis:
+    image: redis:7.4-alpine
+    restart: always
+    ports:
+      - 6379:6379
+    volumes:
+      - redis-data:/data
+  
+volumes:
+  db-data:
+  redis-data:
+    
