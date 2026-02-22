@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL_NAME: str = "all-MiniLM-L12-v2"
     REQUEST_TIMEOUT: float = 10.0
 
+    # SMTP settings
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = ""
+
     @field_validator("DEBUG", mode="before")
     @classmethod
     def validate_debug(cls, v: str) -> int:
