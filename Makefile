@@ -6,6 +6,7 @@ help:
 	@echo "mypy 						-- type check backend"
 	@echo "dev 							-- start development server"
 	@echo "embeddings		 			-- start embedding server"
+	@echo "migrate 						-- run database migrations"
 	@echo "clean 						-- remove docker containers and volumes"
 
 
@@ -36,6 +37,10 @@ dev:
 	@echo "⌛ Waiting 3 seconds for docker services to be healthy..."
 	@sleep 3
 	uv run uvicorn main:app --reload --host localhost --port 8080 --workers 1 --log-level info
+
+.PHONY: migrate
+migrate:
+	uv run alembic upgrade head
 
 .PHONY: clean
 clean:

@@ -1,8 +1,8 @@
 """initial_schema
 
-Revision ID: 306c383d374e
+Revision ID: dc6cafaf83f4
 Revises: eb2196be87d2
-Create Date: 2026-02-21 15:00:57.045942
+Create Date: 2026-02-22 05:49:09.328044
 
 """
 
@@ -13,7 +13,7 @@ from alembic import op
 from pgvector.sqlalchemy import vector
 
 # revision identifiers, used by Alembic.
-revision: str = "306c383d374e"
+revision: str = "dc6cafaf83f4"
 down_revision: Union[str, Sequence[str], None] = "eb2196be87d2"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column("file_name", sa.String(), nullable=False),
         sa.Column("file_type", sa.String(), nullable=False),
         sa.Column("chunking_method", sa.String(), nullable=False),
-        sa.Column("embedding_mode", sa.String(), nullable=False),
+        sa.Column("embedding_model", sa.String(), nullable=False),
         sa.Column("chunk_count", sa.Integer(), nullable=False),
         sa.Column("status", sa.String(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),

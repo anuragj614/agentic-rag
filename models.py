@@ -59,7 +59,7 @@ class Document(Base):
     file_name: Mapped[str] = mapped_column(String, nullable=False)
     file_type: Mapped[FileType] = mapped_column(String, nullable=False)
     chunking_method: Mapped[ChunkingMethod] = mapped_column(String, nullable=False)
-    embedding_mode: Mapped[str] = mapped_column(String, nullable=False)
+    embedding_model: Mapped[str] = mapped_column(String, nullable=False)
     chunk_count: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[DocumentStatus] = mapped_column(
         String, default=DocumentStatus.PENDING, nullable=False
