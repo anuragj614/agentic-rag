@@ -1,13 +1,15 @@
 from contextlib import asynccontextmanager
 from inspect import isawaitable
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from redis import asyncio as aioredis
 from redis.asyncio.client import Redis
 
 from db import sessionmanager
+from routes.ingest import router as ingest_router
+from schemas.common import ErrorResponseSchema, SuccessResponseSchema
 from settings import settings
 from utils.logger import get_logger
 
@@ -33,7 +35,14 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Agentic RAG", description="Agentic RAG", version="0.1.0", lifespan=lifespan
+    title="Agentic RAG",
+    lifespan=lifespan,
+    responses={
+        status.HTTP_429_TOO_MANY_REQUESTS: {
+            "model": ErrorResponseSchema,
+            "description": "Rate limit Response",
+        }
+    },
 )
 
 app.add_middleware(
@@ -53,11 +62,14 @@ async def http_exception_handler(_: Request, exc: HTTPException):
     )
 
 
+app.include_router(ingest_router, prefix="/api", tags=["Ingestion"])
+
+
 @app.get("/", tags=["Status Routes"])
-async def root() -> dict:
-    return {"status": "active", "message": "Agentic RAG is running"}
+async def root() -> SuccessResponseSchema:
+    return SuccessResponseSchema(status="active", message="Agentic RAG is running")
 
 
 @app.get("/healthz", tags=["Status Routes"])
-async def healthz() -> dict:
-    return {"status": "ok!"}
+async def healthz() -> SuccessResponseSchema:
+    return SuccessResponseSchema(status="healthy", message="Health check successful")

@@ -1,6 +1,6 @@
 from datetime import date, datetime, time
 from enum import StrEnum
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
 from pgvector.sqlalchemy import Vector
@@ -16,6 +16,7 @@ from sqlalchemy import (
     Time,
     event,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -25,6 +26,8 @@ from sqlalchemy.orm import (
 )
 from sqlalchemy.sql import func
 from sqlalchemy.sql.sqltypes import Uuid
+
+from schemas.embed_data import ChunkingMethod
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -39,14 +42,8 @@ class FileType(StrEnum):
     TXT = "txt"
 
 
-class ChunkingMethod(StrEnum):
-    RECURSIVE = "recursive"
-    SEMANTIC = "semantic"
-
-
 class DocumentStatus(StrEnum):
     PENDING = "pending"
-    PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
 
@@ -91,7 +88,9 @@ class Embedding(Base):
     )
     text: Mapped[str] = mapped_column(Text, nullable=False)
     embedding: Mapped[list[float]] = mapped_column(Vector(384), nullable=False)
-    chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    embedding_metadata: Mapped[Optional[dict[str, Any]]] = mapped_column(
+        JSONB, nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=func.now(), nullable=False
     )
@@ -102,7 +101,7 @@ class Embedding(Base):
     document: Mapped["Document"] = relationship("Document", back_populates="embeddings")
 
     def __repr__(self) -> str:
-        return f"<Embedding: doc={self.document_id} chunk={self.chunk_index}>"
+        return f"<Embedding: doc={self.document_id} chunk={self.embedding_metadata}>"
 
 
 @event.listens_for(Embedding, "before_insert")

@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
+from redis.asyncio.client import Redis
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -37,7 +38,7 @@ class SessionManager:
         self.session_factory = async_sessionmaker(
             self.engine,
             expire_on_commit=False,
-            autoflash=False,
+            autoflush=False,
             class_=AsyncSession,
         )
 
@@ -83,3 +84,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
     async with sessionmanager.get_session() as session:
         yield session
+
+
+async def get_redis(request: Request) -> Redis:
+    """Dependency to get Redis from app state."""
+    return request.app.state.redis
