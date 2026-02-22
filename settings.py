@@ -24,7 +24,8 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379"
 
     # Embedding service settings
-    EMBEDDING_SERVICE_URL: str = "http://localhost:8001/embeddings"
+    EMBEDDING_SERVICE_URL: str = "http://localhost:8081/embeddings"
+    EMBEDDING_MODEL_NAME: str = "all-MiniLM-L12-v2"
     REQUEST_TIMEOUT: float = 10.0
 
     @field_validator("DEBUG", mode="before")

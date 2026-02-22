@@ -5,13 +5,18 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "aiofiles>=25.1.0",
     "alembic>=1.18.4",
     "asyncpg>=0.31.0",
     "fastapi>=0.129.0",
+    "langchain-community>=0.4.1",
+    "langchain-text-splitters>=1.1.1",
     "pgvector>=0.4.2",
     "psycopg[binary]>=3.3.3",
     "pydantic-settings>=2.13.1",
+    "pymupdf>=1.27.1",
     "python-json-logger>=4.0.0",
+    "python-multipart>=0.0.22",
     "redis[hiredis]>=7.2.0",
     "sqlalchemy>=2.0.46",
     "uvicorn>=0.41.0",
@@ -21,6 +26,7 @@ dependencies = [
 dev = [
     "mypy>=1.19.1",
     "ruff>=0.15.2",
+    "types-aiofiles>=25.1.0.20251011",
 ]
 
 [tool.mypy]

@@ -1,3 +1,6 @@
+import asyncio
+import os
+
 import httpx
 from httpx import TimeoutException
 
@@ -25,3 +28,14 @@ async def generate_embeddings(texts: list[str]) -> list[list[float]] | None:
         except httpx.HTTPError as e:
             logger.error("Failed to generate embeddings", extra={"error": str(e)})
         return None
+
+
+async def file_exists(path: str) -> bool:
+    return await asyncio.to_thread(os.path.exists, path)
+
+
+async def remove_file(path: str):
+    try:
+        await asyncio.to_thread(os.remove, path)
+    except FileNotFoundError:
+        return False

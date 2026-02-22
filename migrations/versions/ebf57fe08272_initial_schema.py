@@ -1,8 +1,8 @@
 """initial_schema
 
-Revision ID: dc6cafaf83f4
+Revision ID: ebf57fe08272
 Revises: eb2196be87d2
-Create Date: 2026-02-22 05:49:09.328044
+Create Date: 2026-02-22 10:51:19.973653
 
 """
 
@@ -11,9 +11,10 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 from pgvector.sqlalchemy import vector
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "dc6cafaf83f4"
+revision: str = "ebf57fe08272"
 down_revision: Union[str, Sequence[str], None] = "eb2196be87d2"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -52,7 +53,9 @@ def upgrade() -> None:
         sa.Column("document_id", sa.Uuid(), nullable=False),
         sa.Column("text", sa.Text(), nullable=False),
         sa.Column("embedding", vector.VECTOR(dim=384), nullable=False),
-        sa.Column("chunk_index", sa.Integer(), nullable=False),
+        sa.Column(
+            "embedding_metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=True
+        ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(
