@@ -90,3 +90,6 @@ class EmailService:
             )
 
         return success
+
+
+email_service = EmailService()
