@@ -17,7 +17,7 @@ _openai_client: AsyncOpenAI | None = None
 def get_openai_client() -> AsyncOpenAI:
     global _openai_client
     if _openai_client is None:
-        _openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        _openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY.get_secret_value())
     return _openai_client
 
 
@@ -26,7 +26,7 @@ async def generate_embeddings(
 ) -> list[list[float]] | None:
 
     if model_name.startswith("text-embedding"):
-        if not settings.OPENAI_API_KEY:
+        if not settings.OPENAI_API_KEY.get_secret_value():
             logger.error("OpenAI API key is missing. Cannot generate embeddings.")
             return None
 

@@ -6,8 +6,8 @@ from langchain_core.tools import tool
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from agent.schemas import DocumentSearchRequest, InterviewBookingRequest
 from models import Embedding, InterviewBooking
-from schemas.chat import BookInterviewRequest
 from services.email import email_service
 from utils.helpers import generate_embeddings
 from utils.logger import get_logger
@@ -15,7 +15,7 @@ from utils.logger import get_logger
 logger = get_logger()
 
 
-@tool
+@tool(args_schema=DocumentSearchRequest)
 async def search_documents(query: str, config: RunnableConfig) -> str:
     """
     Search indexed documents for information relevant to the user's query.
@@ -48,11 +48,11 @@ async def search_documents(query: str, config: RunnableConfig) -> str:
         return "\n\n---\n\n".join(chunks)
 
     except Exception as e:
-        logger.exception("Error in search douments tool", extra={"error": str(e)})
+        logger.exception("Error in search documents tool", extra={"error": str(e)})
         return "Error: Could not search documents."
 
 
-@tool(args_schema=BookInterviewRequest)
+@tool(args_schema=InterviewBookingRequest)
 async def book_interview(
     full_name: str,
     email: str,
@@ -61,9 +61,9 @@ async def book_interview(
     config: RunnableConfig,
 ) -> str:
     """
-    Book an interview for a candidate. Requires the full name, email, interview date(YYYY-MM-DD), and interview time(HH:MM AM/PM).
+    Book an interview for a candidate. Requires the full_name, email, interview_date(YYYY-MM-DD), and interview_time(HH:MM AM/PM).
     Always use this tool when the user asks to book an interview.
-    Always comfirm all the details with the user before booking the interview.
+    Always confirm all the details with the user before booking the interview.
     """
     try:
         configurable = config.get("configurable", {})
