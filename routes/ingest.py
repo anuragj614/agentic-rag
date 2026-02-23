@@ -5,7 +5,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import get_db
 from schemas.common import ErrorResponseSchema
-from schemas.embed_data import ChunkingMethod, IngestResponse, ValidDocumentTypes
+from schemas.embed_data import (
+    ChunkingMethod,
+    EmbeddingModelChoice,
+    IngestResponse,
+    ValidDocumentTypes,
+)
 from services.embed_data import EmbedText
 
 router = APIRouter(prefix="/ingest", tags=["Ingestion"])
@@ -32,6 +37,9 @@ async def ingest_document(
     chunking_method: Annotated[
         ChunkingMethod, Form(description="Chunking strategy: recursive or fixed")
     ] = ChunkingMethod.RECURSIVE,
+    embedding_model: Annotated[
+        EmbeddingModelChoice, Form(description="Embedding model to use")
+    ] = EmbeddingModelChoice.LOCAL_MINILM,
     db: AsyncSession = Depends(get_db),
 ) -> IngestResponse:
 
@@ -61,6 +69,7 @@ async def ingest_document(
         file_name=file.filename or "unknown",
         content_type=file.content_type,
         chunking_method=chunking_method,
+        embedding_model=embedding_model,
     )
     return IngestResponse(
         document_id=document.id,

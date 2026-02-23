@@ -18,4 +18,9 @@ class ValidDocumentTypes(StrEnum):
 
 class ChunkingMethod(StrEnum):
     RECURSIVE = "recursive"
-    FIXED = "fixed"
+    SEMANTIC = "semantic"
+
+
+class EmbeddingModelChoice(StrEnum):
+    LOCAL_MINILM = "all-MiniLM-L12-v2"
+    OPENAI_SMALL = "text-embedding-3-small"

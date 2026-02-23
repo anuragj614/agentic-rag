@@ -3,6 +3,7 @@ import os
 
 import httpx
 from httpx import TimeoutException
+from openai import AsyncOpenAI
 
 from settings import settings
 from utils.logger import get_logger
@@ -10,10 +11,40 @@ from utils.logger import get_logger
 logger = get_logger()
 
 
-async def generate_embeddings(texts: list[str]) -> list[list[float]] | None:
-    async with httpx.AsyncClient() as client:
+_openai_client: AsyncOpenAI | None = None
+
+
+def get_openai_client() -> AsyncOpenAI:
+    global _openai_client
+    if _openai_client is None:
+        _openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+    return _openai_client
+
+
+async def generate_embeddings(
+    texts: list[str], model_name: str = settings.EMBEDDING_MODEL_NAME
+) -> list[list[float]] | None:
+
+    if model_name.startswith("text-embedding"):
+        if not settings.OPENAI_API_KEY:
+            logger.error("OpenAI API key is missing. Cannot generate embeddings.")
+            return None
+
         try:
-            r = await client.post(
+            openai_client = get_openai_client()
+            response = await openai_client.embeddings.create(
+                input=texts, model=model_name, dimensions=384
+            )
+            return [data.embedding for data in response.data]
+        except Exception as e:
+            logger.error(
+                "Failed to generate OpenAI embeddings", extra={"error": str(e)}
+            )
+            return None
+
+    async with httpx.AsyncClient() as http_client:
+        try:
+            r = await http_client.post(
                 settings.EMBEDDING_SERVICE_URL,
                 json={"texts": texts},
                 timeout=settings.REQUEST_TIMEOUT,
