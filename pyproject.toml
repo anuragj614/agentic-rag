@@ -14,6 +14,7 @@ dependencies = [
     "langchain-experimental>=0.4.1",
     "langchain-openai>=1.1.10",
     "langchain-text-splitters>=1.1.1",
+    "langgraph>=1.0.9",
     "openai>=2.21.0",
     "pgvector>=0.4.2",
     "psycopg[binary]>=3.3.3",
