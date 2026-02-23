@@ -28,7 +28,7 @@ class EmailService:
                 port=self.port,
                 username=self.username,
                 password=self.password,
-                start_tls=True,
+                use_tls=settings.SMTP_TLS,
             )
             return True
         except aiosmtplib.SMTPException as e:
