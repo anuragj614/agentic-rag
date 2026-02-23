@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL_NAME: str = "all-MiniLM-L12-v2"
     REQUEST_TIMEOUT: float = 10.0
 
+    # OpenAI settings
+    OPENAI_API_KEY: str = ""
+
     # SMTP settings
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
@@ -44,3 +47,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY

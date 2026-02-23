@@ -1,14 +1,16 @@
+import asyncio
 from typing import Annotated, AsyncGenerator, Optional
 from uuid import UUID, uuid4
 
 import aiofiles
 import aiofiles.tempfile as tempfile
+import httpx
 from fastapi import Depends, HTTPException, status
 from langchain_community.document_loaders import PyMuPDFLoader
-from langchain_text_splitters import (
-    CharacterTextSplitter,
-    RecursiveCharacterTextSplitter,
-)
+from langchain_core.embeddings import Embeddings
+from langchain_experimental.text_splitter import SemanticChunker
+from langchain_openai import OpenAIEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import get_db
@@ -19,6 +21,28 @@ from utils.helpers import file_exists, generate_embeddings, remove_file
 from utils.logger import get_logger
 
 logger = get_logger()
+
+
+class MicroserviceEmbeddings(Embeddings):
+    """Custom Langchain Embeddings wrapper for local microservice"""
+
+    def __init__(self, model_name: str = settings.EMBEDDING_MODEL_NAME):
+        self.model_name = model_name
+        self.api_url = settings.EMBEDDING_SERVICE_URL
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        try:
+            with httpx.Client(timeout=settings.REQUEST_TIMEOUT) as client:
+                response = client.post(self.api_url, json={"texts": texts})
+                response.raise_for_status()
+                return response.json()["embeddings"]
+        except Exception as e:
+            logger.error("Error calling embedding service", extra={"error": str(e)})
+            return []
+
+    def embed_query(self, text: str) -> list[float]:
+        embeddings = self.embed_documents([text])
+        return embeddings[0] if embeddings else []
 
 
 class EmbedText:
@@ -44,19 +68,23 @@ class EmbedText:
             chunk_size=300,
             chunk_overlap=30,
         )
-        self._fixed_splitter = CharacterTextSplitter(
-            separator="\n\n",
-            chunk_size=300,
-            chunk_overlap=30,
-            length_function=len,
-        )
 
     def _get_splitter(
-        self, chunking_method: str
-    ) -> RecursiveCharacterTextSplitter | CharacterTextSplitter:
-        if chunking_method == ChunkingMethod.RECURSIVE:
-            return self._recursive_splitter
-        return self._fixed_splitter
+        self, chunking_method: str, embedding_model: str
+    ) -> RecursiveCharacterTextSplitter | SemanticChunker:
+        if chunking_method == ChunkingMethod.SEMANTIC:
+            embedder: Embeddings
+
+            if embedding_model.startswith("text-embedding"):
+                embedder = OpenAIEmbeddings(
+                    model=embedding_model,
+                    openai_api_key=settings.OPENAI_API_KEY,
+                    dimensions=384,
+                )
+            else:
+                embedder = MicroserviceEmbeddings(model_name=embedding_model)
+            return SemanticChunker(embedder)
+        return self._recursive_splitter
 
     def _validate_document(self, content_type: str) -> FileType | None:
         if content_type == ValidDocumentTypes.PDF.value:
@@ -77,6 +105,7 @@ class EmbedText:
         self,
         chunks: list[str],
         document_id: UUID,
+        embedding_model: str,
         page: Optional[int] = None,
         batch_size: int = 10,
         min_chars: int = 30,
@@ -87,7 +116,9 @@ class EmbedText:
             filtered_chunks = [c for c in chunked_text if len(c.strip()) >= min_chars]
             if not filtered_chunks:
                 continue
-            embeddings = await generate_embeddings(filtered_chunks)
+            embeddings = await generate_embeddings(
+                filtered_chunks, model_name=embedding_model
+            )
             if not embeddings:
                 raise ValueError("Error generating embeddings.")
 
@@ -104,17 +135,20 @@ class EmbedText:
             models = []
 
     async def _embed_pdf_file(
-        self, tmp_file: str, document_id: UUID, chunking_method: str
+        self,
+        tmp_file: str,
+        document_id: UUID,
+        splitter: RecursiveCharacterTextSplitter | SemanticChunker,
+        embedding_model: str,
     ) -> int:
-        splitter = self._get_splitter(chunking_method)
         chunk_count = 0
         pdf_loader = PyMuPDFLoader(tmp_file)
         try:
             async for page in pdf_loader.alazy_load():
-                chunks = splitter.split_text(page.page_content)
+                chunks = await asyncio.to_thread(splitter.split_text, page.page_content)
                 page_num = page.metadata.get("page", 0)
                 async for models in self._get_paginated_embedding_models(
-                    chunks, document_id, page=page_num
+                    chunks, document_id, embedding_model, page=page_num
                 ):
                     self.db.add_all(models)
                     await self.db.commit()
@@ -128,15 +162,18 @@ class EmbedText:
         return 0
 
     async def _embed_txt_file(
-        self, tmp_file: str, document_id: UUID, chunking_method: str
+        self,
+        tmp_file: str,
+        document_id: UUID,
+        splitter: RecursiveCharacterTextSplitter | SemanticChunker,
+        embedding_model: str,
     ) -> int:
-        splitter = self._get_splitter(chunking_method)
         try:
             async with aiofiles.open(tmp_file, mode="rt", encoding="utf-8") as f:
                 txt = await f.read()
-            chunks = splitter.split_text(txt)
+            chunks = await asyncio.to_thread(splitter.split_text, txt)
             async for models in self._get_paginated_embedding_models(
-                chunks, document_id
+                chunks, document_id, embedding_model
             ):
                 self.db.add_all(models)
                 await self.db.commit()
@@ -154,7 +191,9 @@ class EmbedText:
         file_name: str,
         content_type: str,
         chunking_method: str = ChunkingMethod.RECURSIVE,
+        embedding_model: str = settings.EMBEDDING_MODEL_NAME,
     ) -> Document:
+
         file_type = self._validate_document(content_type)
         if not file_type:
             raise HTTPException(
@@ -166,23 +205,25 @@ class EmbedText:
             file_name=file_name,
             file_type=file_type,
             chunking_method=chunking_method,
-            embedding_model=settings.EMBEDDING_MODEL_NAME,
+            embedding_model=embedding_model,
             chunk_count=0,
             status=DocumentStatus.PENDING,
         )
         self.db.add(document)
         await self.db.commit()
 
+        splitter = self._get_splitter(chunking_method, embedding_model)
+
         suffix = ".pdf" if file_type == FileType.PDF else ".txt"
         tmp_file = await self._write_temp_file(file_bytes, suffix)
         try:
             if file_type == FileType.PDF:
                 chunk_count = await self._embed_pdf_file(
-                    tmp_file, document.id, chunking_method
+                    tmp_file, document.id, splitter, embedding_model
                 )
             else:
                 chunk_count = await self._embed_txt_file(
-                    tmp_file, document.id, chunking_method
+                    tmp_file, document.id, splitter, embedding_model
                 )
 
             document.chunk_count = chunk_count
