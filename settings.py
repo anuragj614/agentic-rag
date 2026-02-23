@@ -1,6 +1,6 @@
 import os
 
-from pydantic import field_validator
+from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,7 +29,9 @@ class Settings(BaseSettings):
     REQUEST_TIMEOUT: float = 10.0
 
     # OpenAI settings
-    OPENAI_API_KEY: str = ""
+    MODEL_NAME: str = "gpt-4o-mini"
+    TEMPERATURE: float = 0.5
+    OPENAI_API_KEY: SecretStr = SecretStr("")
 
     # SMTP settings
     SMTP_HOST: str = "smtp.gmail.com"
@@ -48,6 +50,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-
-os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
