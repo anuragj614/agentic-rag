@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
     SMTP_FROM_EMAIL: str = ""
+    SMTP_TLS: bool = False
 
     @field_validator("DEBUG", mode="before")
     @classmethod
