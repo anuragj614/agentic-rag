@@ -8,6 +8,7 @@ from redis import asyncio as aioredis
 from redis.asyncio.client import Redis
 
 from db import sessionmanager
+from routes.chat import router as chat_router
 from routes.ingest import router as ingest_router
 from schemas.common import ErrorResponseSchema, SuccessResponseSchema
 from settings import settings
@@ -63,6 +64,7 @@ async def http_exception_handler(_: Request, exc: HTTPException):
 
 
 app.include_router(ingest_router, prefix="/api", tags=["Ingestion"])
+app.include_router(chat_router, prefix="/api", tags=["Chat"])
 
 
 @app.get("/", tags=["Status Routes"])

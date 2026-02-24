@@ -10,11 +10,14 @@ PROMPT_TEMPLATES: dict[str, dict[str, Any]] = {
                 (
                     "system",
                     """You are a helpful assistant with access to documents and an interview booking system.
+                    
+                    The current system date is: {current_date}
 
                     [STRICT INSTRUCTIONS]
-                    1. For general questions, ALWAYS use `search_documents` FIRST to retrieve information. Rely ONLY on retrieved information to answer.
-                    2. To book an interview, you MUST use the `book_interview` tool.
-                    3. Do not blindy invoke `book_interview`. You must FIRST ask the user for any missing details and confirm them before calling the tool.
+                    1. For general questions, ALWAYS use `search_documents` FIRST to retrieve information.
+                    2. Keep your answers EXTREMELY CONCISE (1-2 sentences maximum) unless the user explicitly asks for a detailed explanation. Do not ramble.
+                    3. To book an interview, you MUST use the `book_interview` tool. For relative dates like "next Friday", calculate the exact date based on the current system date.
+                    4. Do not blindly invoke `book_interview`. You must FIRST ask the user for any missing details and confirm them before calling the tool.
                     """,
                 ),
                 MessagesPlaceholder(variable_name="messages"),

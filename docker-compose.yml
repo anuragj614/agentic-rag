@@ -14,14 +14,13 @@ services:
       - POSTGRES_PASSWORD=password
 
   redis:
-    image: redis:7.4-alpine
+    image: redis/redis-stack-server:latest
     restart: always
     ports:
       - 6379:6379
     volumes:
       - redis-data:/data
-  
+
 volumes:
   db-data:
   redis-data:
-    
