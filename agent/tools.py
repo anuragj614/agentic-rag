@@ -18,8 +18,8 @@ logger = get_logger()
 @tool(args_schema=DocumentSearchRequest)
 async def search_documents(query: str, config: RunnableConfig) -> str:
     """
-    Search indexed documents for information relevant to the user's query.
-    Always use this tool when the user asks a question about the uploaded documents.
+    This tool is for searching indexed documents using HNSW (Cosine distance) to retrieve relevant information to the user's query. This is the default search tool.
+    If no relevant information is found, you MUST inform the user that you do not have any relevant information. Do not answer queries outside of the knowledge base.
     """
     try:
         configurable = config.get("configurable", {})
@@ -32,7 +32,6 @@ async def search_documents(query: str, config: RunnableConfig) -> str:
 
         query_vector = query_embeddings[0]
 
-        # TODO: Add a similarity search using l2 distance.
         stmt = (
             select(Embedding.text)
             .order_by(Embedding.embedding.cosine_distance(query_vector))
@@ -52,6 +51,45 @@ async def search_documents(query: str, config: RunnableConfig) -> str:
         return "Error: Could not search documents."
 
 
+@tool(args_schema=DocumentSearchRequest)
+async def search_documents_ivfflat(query: str, config: RunnableConfig) -> str:
+    """
+    This tool is for searching indexed documents using IVFFlat (L2 distance) to retrieve relevant information.
+    Only use this tool when the user explicitly asks to compare search algorithms or specifically requests IVFFlat / L2 distance.
+    If no relevant information is found, you MUST inform the user that you do not have any relevant information. Do not answer queries outside of the knowledge base.
+    """
+    try:
+        configurable = config.get("configurable", {})
+
+        db: AsyncSession = configurable["db"]
+
+        query_embeddings = await generate_embeddings([query])
+        if not query_embeddings:
+            return "Error: Could not generate embeddings for the search query."
+
+        query_vector = query_embeddings[0]
+
+        stmt = (
+            select(Embedding.text)
+            .order_by(Embedding.embedding.l2_distance(query_vector))
+            .limit(5)
+        )
+
+        result = await db.execute(stmt)
+        chunks = result.scalars().all()
+
+        if not chunks:
+            return "No relevant information found in the knowledge base."
+
+        return "\n\n---\n\n".join(chunks)
+
+    except Exception as e:
+        logger.exception(
+            "Error in search documents ivfflat tool", extra={"error": str(e)}
+        )
+        return "Error: Could not search documents."
+
+
 @tool(args_schema=InterviewBookingRequest)
 async def book_interview(
     full_name: str,
@@ -61,7 +99,7 @@ async def book_interview(
     config: RunnableConfig,
 ) -> str:
     """
-    Book an interview for a candidate. Requires the full_name, email, interview_date(YYYY-MM-DD), and interview_time(HH:MM AM/PM).
+    This tool is for booking an interview if requested. Requires the full_name, email, interview_date(YYYY-MM-DD), and interview_time(HH:MM AM/PM).
     Always use this tool when the user asks to book an interview.
     Always confirm all the details with the user before booking the interview.
     """

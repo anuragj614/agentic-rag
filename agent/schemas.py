@@ -29,5 +29,5 @@ class ChatState(TypedDict):
     messages: Annotated[list, add_messages]
 
 
-class CommonRuntimeContext(TypedDict):
+class RuntimeContext(TypedDict):
     llm: LLM

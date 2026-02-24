@@ -23,6 +23,7 @@ ALLOWED_MIME_TYPES = {mime.value for mime in ValidDocumentTypes}
 @router.post(
     "/",
     status_code=status.HTTP_201_CREATED,
+    response_model=IngestResponse,
     responses={
         status.HTTP_201_CREATED: {"description": "Document ingested successfully"},
         status.HTTP_400_BAD_REQUEST: {
@@ -30,7 +31,6 @@ ALLOWED_MIME_TYPES = {mime.value for mime in ValidDocumentTypes}
             "description": "Invalid file type",
         },
     },
-    response_model=IngestResponse,
 )
 async def ingest_document(
     file: Annotated[UploadFile, File(..., description="PDF or TXT file to embed")],

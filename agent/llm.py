@@ -18,3 +18,8 @@ class LLM:
 
     def bind_tools(self, tools: list):
         return self.llm.bind_tools(tools)
+
+
+async def get_llm() -> LLM:
+    """Dependency to get the LLM instance."""
+    return LLM()
