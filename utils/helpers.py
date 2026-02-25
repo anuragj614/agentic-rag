@@ -12,6 +12,7 @@ logger = get_logger()
 
 
 _openai_client: AsyncOpenAI | None = None
+_http_client: httpx.AsyncClient | None = None
 
 
 def get_openai_client() -> AsyncOpenAI:
@@ -19,6 +20,13 @@ def get_openai_client() -> AsyncOpenAI:
     if _openai_client is None:
         _openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY.get_secret_value())
     return _openai_client
+
+
+def get_http_client() -> httpx.AsyncClient:
+    global _http_client
+    if _http_client is None:
+        _http_client = httpx.AsyncClient()
+    return _http_client
 
 
 async def generate_embeddings(
@@ -42,31 +50,32 @@ async def generate_embeddings(
             )
             return None
 
-    async with httpx.AsyncClient() as http_client:
-        try:
-            r = await http_client.post(
-                settings.EMBEDDING_SERVICE_URL,
-                json={"texts": texts},
-                timeout=settings.REQUEST_TIMEOUT,
-            )
-            if r.status_code == 200:
-                return r.json()["embeddings"]
-            logger.error(
-                "Error generating embeddings", extra={"status_code": r.status_code}
-            )
-        except TimeoutException:
-            logger.error("Request to embedding service timed out")
-        except httpx.HTTPError as e:
-            logger.error("Failed to generate embeddings", extra={"error": str(e)})
-        return None
+    http_client = get_http_client()
+    try:
+        r = await http_client.post(
+            settings.EMBEDDING_SERVICE_URL,
+            json={"texts": texts},
+            timeout=settings.REQUEST_TIMEOUT,
+        )
+        if r.status_code == 200:
+            return r.json()["embeddings"]
+        logger.error(
+            "Error generating embeddings", extra={"status_code": r.status_code}
+        )
+    except TimeoutException:
+        logger.error("Request to embedding service timed out")
+    except httpx.HTTPError as e:
+        logger.error("Failed to generate embeddings", extra={"error": str(e)})
+    return None
 
 
 async def file_exists(path: str) -> bool:
     return await asyncio.to_thread(os.path.exists, path)
 
 
-async def remove_file(path: str):
+async def remove_file(path: str) -> bool:
     try:
         await asyncio.to_thread(os.remove, path)
+        return True
     except FileNotFoundError:
         return False

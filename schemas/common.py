@@ -1,7 +1,8 @@
+from typing import TypedDict
+
 from pydantic import BaseModel
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing_extensions import TypedDict
 
 from agent.llm import LLM
 

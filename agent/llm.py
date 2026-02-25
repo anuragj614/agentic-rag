@@ -20,6 +20,12 @@ class LLM:
         return self.llm.bind_tools(tools)
 
 
-async def get_llm() -> LLM:
+_llm_instance: LLM | None = None
+
+
+def get_llm() -> LLM:
     """Dependency to get the LLM instance."""
-    return LLM()
+    global _llm_instance
+    if _llm_instance is None:
+        _llm_instance = LLM()
+    return _llm_instance

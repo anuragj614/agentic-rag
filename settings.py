@@ -29,17 +29,17 @@ class Settings(BaseSettings):
     REQUEST_TIMEOUT: float = 10.0
 
     # OpenAI settings
-    MODEL_NAME: str = "gpt-4o-mini"
+    MODEL_NAME: str = ""
     TEMPERATURE: float = 0.5
     OPENAI_API_KEY: SecretStr = SecretStr("")
 
     # SMTP settings
-    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_HOST: str = ""
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
-    SMTP_PASSWORD: str = ""
+    SMTP_PASSWORD: SecretStr = SecretStr("")
     SMTP_FROM_EMAIL: str = ""
-    SMTP_TLS: bool = False
+    SMTP_TLS: bool = True
 
     @field_validator("DEBUG", mode="before")
     @classmethod

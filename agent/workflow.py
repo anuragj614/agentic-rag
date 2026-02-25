@@ -1,11 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.runtime import Runtime
 
 from agent.prompts import PROMPT_TEMPLATES
-from agent.schemas import ChatState
+from agent.schemas import ChatState, RuntimeContext
 from agent.tools import book_interview, search_documents, search_documents_ivfflat
 from utils.logger import get_logger
 
@@ -16,10 +16,10 @@ tools = [search_documents, search_documents_ivfflat, book_interview]
 tool_node = ToolNode(tools)
 
 
-async def chat_node(state: ChatState, config: RunnableConfig):
+async def chat_node(state: ChatState, runtime: Runtime[RuntimeContext]):
     """Main chat node - handles conversation logic and tool calling."""
 
-    llm = config["configurable"].get("llm")
+    llm = runtime.context.get("llm")
     if not llm:
         raise ValueError("LLM object is required.")
 
@@ -28,7 +28,7 @@ async def chat_node(state: ChatState, config: RunnableConfig):
     prompt = PROMPT_TEMPLATES["chat_agent"]["chat_prompt"].invoke(
         {
             "messages": state["messages"],
-            "current_date": datetime.now().strftime("%Y-%m-%d"),
+            "current_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         }
     )
 
@@ -36,7 +36,7 @@ async def chat_node(state: ChatState, config: RunnableConfig):
     return {"messages": [response]}
 
 
-workflow = StateGraph(state_schema=ChatState)
+workflow = StateGraph(state_schema=ChatState, context_schema=RuntimeContext)
 
 workflow.add_node("chat", chat_node)
 workflow.add_node("tools", tool_node)

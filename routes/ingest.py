@@ -30,12 +30,20 @@ ALLOWED_MIME_TYPES = {mime.value for mime in ValidDocumentTypes}
             "model": ErrorResponseSchema,
             "description": "Invalid file type",
         },
+        status.HTTP_413_CONTENT_TOO_LARGE: {
+            "model": ErrorResponseSchema,
+            "description": "File size exceeds limit",
+        },
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {
+            "model": ErrorResponseSchema,
+            "description": "Unsupported media type",
+        },
     },
 )
 async def ingest_document(
     file: Annotated[UploadFile, File(..., description="PDF or TXT file to embed")],
     chunking_method: Annotated[
-        ChunkingMethod, Form(description="Chunking strategy: recursive or fixed")
+        ChunkingMethod, Form(description="Chunking strategy: recursive or semantic.")
     ] = ChunkingMethod.RECURSIVE,
     embedding_model: Annotated[
         EmbeddingModelChoice, Form(description="Embedding model to use")

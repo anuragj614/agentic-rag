@@ -1,8 +1,8 @@
-"""initial_schema
+"""migrate_initial_models
 
-Revision ID: ebf57fe08272
+Revision ID: 1a89f902ffc9
 Revises: eb2196be87d2
-Create Date: 2026-02-22 10:51:19.973653
+Create Date: 2026-02-24 17:52:47.695942
 
 """
 
@@ -14,7 +14,7 @@ from pgvector.sqlalchemy import vector
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "ebf57fe08272"
+revision: str = "1a89f902ffc9"
 down_revision: Union[str, Sequence[str], None] = "eb2196be87d2"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -80,7 +80,7 @@ def upgrade() -> None:
         unique=False,
         postgresql_using="ivfflat",
         postgresql_with={"lists": 128},
-        postgresql_ops={"embedding": "vector_cosine_ops"},
+        postgresql_ops={"embedding": "vector_l2_ops"},
     )
     # ### end Alembic commands ###
 
@@ -93,7 +93,7 @@ def downgrade() -> None:
         table_name="embeddings",
         postgresql_using="ivfflat",
         postgresql_with={"lists": 128},
-        postgresql_ops={"embedding": "vector_cosine_ops"},
+        postgresql_ops={"embedding": "vector_l2_ops"},
     )
     op.drop_index(
         "ix_embeddings_hnsw",

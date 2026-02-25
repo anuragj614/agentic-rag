@@ -79,8 +79,6 @@ sessionmanager = SessionManager()
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency to get a database session."""
-    if not sessionmanager.session_factory:
-        sessionmanager.init_db()
 
     async with sessionmanager.get_session() as session:
         yield session
