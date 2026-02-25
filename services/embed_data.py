@@ -78,7 +78,7 @@ class EmbedText:
             if embedding_model.startswith("text-embedding"):
                 embedder = OpenAIEmbeddings(
                     model=embedding_model,
-                    openai_api_key=settings.OPENAI_API_KEY,
+                    openai_api_key=settings.OPENAI_API_KEY,  # type: ignore
                     dimensions=384,
                 )
             else:
@@ -142,6 +142,7 @@ class EmbedText:
         embedding_model: str,
     ) -> int:
         chunk_count = 0
+        all_models = []
         pdf_loader = PyMuPDFLoader(tmp_file)
         try:
             async for page in pdf_loader.alazy_load():
@@ -150,9 +151,10 @@ class EmbedText:
                 async for models in self._get_paginated_embedding_models(
                     chunks, document_id, embedding_model, page=page_num
                 ):
-                    self.db.add_all(models)
-                    await self.db.commit()
+                    all_models.extend(models)
                 chunk_count += len(chunks)
+            self.db.add_all(all_models)
+            await self.db.commit()
             return chunk_count
         except Exception:
             await self.db.rollback()
@@ -168,6 +170,7 @@ class EmbedText:
         splitter: RecursiveCharacterTextSplitter | SemanticChunker,
         embedding_model: str,
     ) -> int:
+        all_models = []
         try:
             async with aiofiles.open(tmp_file, mode="rt", encoding="utf-8") as f:
                 txt = await f.read()
@@ -175,9 +178,10 @@ class EmbedText:
             async for models in self._get_paginated_embedding_models(
                 chunks, document_id, embedding_model
             ):
-                self.db.add_all(models)
-                await self.db.commit()
-            return len(chunks)
+                all_models.extend(models)
+            self.db.add_all(all_models)
+            await self.db.commit()
+            return len(all_models)
         except Exception:
             await self.db.rollback()
             logger.exception(

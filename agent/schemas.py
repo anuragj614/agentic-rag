@@ -1,9 +1,8 @@
 from datetime import date, time
-from typing import Annotated
+from typing import Annotated, TypedDict
 
 from langgraph.graph.message import add_messages
 from pydantic import BaseModel, EmailStr, Field
-from typing_extensions import TypedDict
 
 from agent.llm import LLM
 
@@ -13,7 +12,7 @@ class InterviewBookingRequest(BaseModel):
     email: EmailStr = Field(description="The email address of the candidate.")
     interview_date: date = Field(description="The date of the interview (YYYY-MM-DD).")
     interview_time: time = Field(
-        description="The time of the interview in 24 hour format (HH:MM)."
+        description="The time of the interview in 24-hour format (HH:MM)."
     )
 
 
@@ -30,4 +29,6 @@ class ChatState(TypedDict):
 
 
 class RuntimeContext(TypedDict):
+    """LLM context passed to the graph at runtime. Not saved to memory."""
+
     llm: LLM

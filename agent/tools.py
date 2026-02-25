@@ -34,6 +34,7 @@ async def search_documents(query: str, config: RunnableConfig) -> str:
 
         stmt = (
             select(Embedding.text)
+            .where(Embedding.deleted_at.is_(None))
             .order_by(Embedding.embedding.cosine_distance(query_vector))
             .limit(5)
         )
@@ -71,6 +72,7 @@ async def search_documents_ivfflat(query: str, config: RunnableConfig) -> str:
 
         stmt = (
             select(Embedding.text)
+            .where(Embedding.deleted_at.is_(None))
             .order_by(Embedding.embedding.l2_distance(query_vector))
             .limit(5)
         )
@@ -99,7 +101,7 @@ async def book_interview(
     config: RunnableConfig,
 ) -> str:
     """
-    This tool is for booking an interview if requested. Requires the full_name, email, interview_date(YYYY-MM-DD), and interview_time(HH:MM AM/PM).
+    This tool is for booking an interview if requested. Requires the full_name, email, interview_date(YYYY-MM-DD), and interview_time(HH:MM).
     Always use this tool when the user asks to book an interview.
     Always confirm all the details with the user before booking the interview.
     """
@@ -119,14 +121,23 @@ async def book_interview(
         db.add(booking)
         await db.commit()
 
-        email_sent = await email_service.send_interview_booking_confirmation(booking)
+        try:
+            email_sent = await email_service.send_interview_booking_confirmation(
+                booking
+            )
 
+        except Exception:
+            logger.exception(
+                "Failed to send interview booking confirmation email",
+                extra={"booking_id": str(booking.id)},
+            )
+            email_sent = False
         if email_sent:
             booking.confirmation_sent = True
             await db.commit()
             return f"Success! Interview booked successfully for {full_name} on {interview_date} at {interview_time}. Confirmation email sent to {email}."
-        else:
-            return f"Interview booked in the database for {full_name} on {interview_date} at {interview_time}. Confirmation email could not be sent to {email}. Please try again later."
+
+        return f"Interview booked in the database for {full_name} on {interview_date} at {interview_time}. Confirmation email could not be sent to {email}. Please try again later."
 
     except Exception as e:
         logger.exception("Failed to book interview", extra={"error": str(e)})

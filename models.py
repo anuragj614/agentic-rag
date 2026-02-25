@@ -132,7 +132,7 @@ Index(
     Embedding.__table__.c.embedding,
     postgresql_using="ivfflat",
     postgresql_with={"lists": 128},
-    postgresql_ops={"embedding": "vector_cosine_ops"},
+    postgresql_ops={"embedding": "vector_l2_ops"},
 )
 
 
