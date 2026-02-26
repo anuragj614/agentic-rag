@@ -6,7 +6,7 @@ A conversational RAG (Retrieval-Augmented Generation) API built with FastAPI and
 
 - **Document Ingestion** — Upload PDF and TXT files (up to 10MB). Documents are chunked and embedded into a pgvector database for semantic search.
 - **Two Chunking Strategies** — Recursive (fast, rule-based) or Semantic (embedding-aware, groups semantically similar text).
-- **Two Embedding Options** — Local `all-MiniLM-L12-v2` model via a self-hosted embedding microservice, or OpenAI `text-embedding-3-*` models.
+- **Two Embedding Options** — Local `all-MiniLM-L12-v2` model via a self-hosted embedding microservice, or OpenAI `text-embedding-3-small` model.
 - **Agentic Chat** — A LangGraph ReAct agent answers queries by searching ingested documents with HNSW (cosine) or IVFFlat (L2) vector indexes.
 - **Interview Booking** — The agent can collect candidate details and create interview bookings, stored in PostgreSQL with an email confirmation sent via SMTP.
 - **Persistent Conversation Memory** — Conversations are persisted per `thread_id` using a Redis checkpointer, enabling multi-turn chat sessions.
@@ -27,6 +27,13 @@ A conversational RAG (Retrieval-Augmented Generation) API built with FastAPI and
 | Email | aiosmtplib |
 | Package manager | uv |
 
+
+## Docs
+
+| Document | Description |
+|----------|-------------|
+| [Findings Report](docs/findings_report.md) | Comparison of chunking strategies, embedding model, similarity search algorithms, and other system decisions |
+| [Database Schema](docs/documents_table_database.md) | Full schema reference for the PostgreSQL tables |
 
 ## Prerequisites
 
