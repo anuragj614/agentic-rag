@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     EMBEDDING_SERVICE_URL: str = "http://localhost:8081/embeddings"
     EMBEDDING_MODEL_NAME: str = "all-MiniLM-L12-v2"
     REQUEST_TIMEOUT: float = 10.0
+    SEMANTIC_REQUEST_TIMEOUT: float = 120.0
 
     # OpenAI settings
     MODEL_NAME: str = ""

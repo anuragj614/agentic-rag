@@ -26,23 +26,27 @@ logger = get_logger()
 class MicroserviceEmbeddings(Embeddings):
     """Custom Langchain Embeddings wrapper for local microservice"""
 
-    def __init__(self, model_name: str = settings.EMBEDDING_MODEL_NAME):
+    def __init__(
+        self,
+        model_name: str = settings.EMBEDDING_MODEL_NAME,
+        timeout: float = settings.REQUEST_TIMEOUT,
+    ):
         self.model_name = model_name
         self.api_url = settings.EMBEDDING_SERVICE_URL
+        self.timeout = timeout
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         try:
-            with httpx.Client(timeout=settings.REQUEST_TIMEOUT) as client:
+            with httpx.Client(timeout=self.timeout) as client:
                 response = client.post(self.api_url, json={"texts": texts})
                 response.raise_for_status()
                 return response.json()["embeddings"]
         except Exception as e:
             logger.error("Error calling embedding service", extra={"error": str(e)})
-            return []
+            raise
 
     def embed_query(self, text: str) -> list[float]:
-        embeddings = self.embed_documents([text])
-        return embeddings[0] if embeddings else []
+        return self.embed_documents([text])[0]
 
 
 class EmbedText:
@@ -82,7 +86,10 @@ class EmbedText:
                     dimensions=384,
                 )
             else:
-                embedder = MicroserviceEmbeddings(model_name=embedding_model)
+                embedder = MicroserviceEmbeddings(
+                    model_name=embedding_model,
+                    timeout=settings.SEMANTIC_REQUEST_TIMEOUT,
+                )
             return SemanticChunker(embedder)
         return self._recursive_splitter
 
