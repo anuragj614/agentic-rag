@@ -2,9 +2,9 @@ from typing import Any
 
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-SYSTEM_PROMT = """\
+SYSTEM_PROMPT = """\
 You are a helpful assistant with access to documents and an interview booking system.
-                    
+
 The current system date is: {current_date}
 
 [STRICT INSTRUCTIONS]
@@ -20,7 +20,7 @@ PROMPT_TEMPLATES: dict[str, dict[str, Any]] = {
         "description": "Main RAG Agent with tools",
         "chat_prompt": ChatPromptTemplate.from_messages(
             [
-                ("system", SYSTEM_PROMT),
+                ("system", SYSTEM_PROMPT),
                 MessagesPlaceholder(variable_name="messages"),
             ]
         ),
