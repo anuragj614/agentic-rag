@@ -15,6 +15,14 @@ from utils.logger import get_logger
 logger = get_logger()
 
 
+def _get_db_session(config: RunnableConfig) -> AsyncSession:
+    configurable = config.get("configurable", {})
+    db = configurable.get("db")
+    if db is None:
+        raise ValueError("Missing db session in config['configurable']['db']")
+    return db
+
+
 @tool(args_schema=DocumentSearchRequest)
 async def search_documents(query: str, config: RunnableConfig) -> str:
     """
@@ -22,9 +30,7 @@ async def search_documents(query: str, config: RunnableConfig) -> str:
     If no relevant information is found, you MUST inform the user that you do not have any relevant information. Do not answer queries outside of the knowledge base.
     """
     try:
-        configurable = config.get("configurable", {})
-
-        db: AsyncSession = configurable["db"]
+        db = _get_db_session(config)
 
         query_embeddings = await generate_embeddings([query])
         if not query_embeddings:
@@ -60,9 +66,7 @@ async def search_documents_ivfflat(query: str, config: RunnableConfig) -> str:
     If no relevant information is found, you MUST inform the user that you do not have any relevant information. Do not answer queries outside of the knowledge base.
     """
     try:
-        configurable = config.get("configurable", {})
-
-        db: AsyncSession = configurable["db"]
+        db = _get_db_session(config)
 
         query_embeddings = await generate_embeddings([query])
         if not query_embeddings:
@@ -106,8 +110,7 @@ async def book_interview(
     Always confirm all the details with the user before booking the interview.
     """
     try:
-        configurable = config.get("configurable", {})
-        db: AsyncSession = configurable["db"]
+        db = _get_db_session(config)
 
         booking = InterviewBooking(
             id=uuid4(),
